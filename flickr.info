@@ -1,0 +1,7 @@
+; $Id$
+name           = Flickr
+description    = Implementation of the Flickr API
+package        = Third-party Integration
+version        = 6.x-1.0
+core           = 6.x
+dependencies[] = fancybox

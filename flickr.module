@@ -1,0 +1,150 @@
+<?php
+
+// $Id$
+
+/**
+ * @file flickr.module
+ * Main file for the Flickr module
+ *
+ * @author Jeppe Bijker
+ * @author Raymond Jelierse
+ */
+
+/**
+ * Implements hook_init()
+ *
+ * Add Flickr settings to the Drupal.settings object.
+ */
+function flickr_init() {
+  $settings = array(
+      'apikey' => variable_get('flickr_apikey', NULL),
+      'blockPhotoSet' => variable_get('flickr_block_photoset', NULL),
+  );
+
+  drupal_add_js(array('flickr' => $settings), 'setting');
+  drupal_add_js(drupal_get_path('module', 'flickr') . '/scripts/flickr.js');
+}
+
+/**
+ * Implements hook_menu()
+ */
+function flickr_menu() {
+  return array(
+      'admin/settings/flickr' => array(
+          'title' => 'Flickr',
+          'description' => t('Configure the Flickr API.'),
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('flickr_settings_form'),
+          'access arguments' => array('administer flickr'),
+      ),
+  );
+}
+
+/**
+ * Implements hook_block()
+ */
+function flickr_block($op = 'list', $delta = 0, $data = array()) {
+  switch($op) {
+    case 'list':
+      return array(
+          'potw' => array(
+              'info' => t('Photo of the week (flickr)'),
+          ),
+      );
+    case 'view':
+      return flickr_block_view($delta);
+    case 'configure':
+      return flickr_block_form($delta);
+    case 'save':
+      flickr_block_form_submit($delta, $data);
+      break;
+  }
+}
+
+/**
+ * Handles flickr_block() 'view' operations.
+ *
+ * @param $block_id
+ *   The block identifier.
+ *
+ * @return
+ *   The block content.
+ */
+function flickr_block_view($block_id) {
+  switch ($block_id) {
+    case 'potw':
+      return array(
+          'subject' => t('Photo of the week'),
+          'content' => '<div id="flickr-block-placeholder"></div>',
+      );
+  }
+}
+
+/**
+ * Handles flickr_block() 'configure' operations.
+ *
+ * @param $block_id
+ *   The block identifier.
+ *
+ * @return
+ *   The block configuration form, if any.
+ */
+function flickr_block_form($block_id) {
+  switch ($block_id) {
+    case 'potw':
+      return array(
+          'flickr_block_photoset' => array(
+              '#type' => 'textfield',
+              '#title' => t('Default photoset'),
+              '#default_value' => variable_get('flickr_block_photoset', ''),
+              '#description' => t('This can either be the numerical ID of the actual photoset, or a link to the photoset.')
+          ),
+      );
+  }
+}
+
+/**
+ * Handles flickr_block() 'save' operations.
+ *
+ * @param $block_id
+ *   The block identifier.
+ *
+ * @param $data
+ *   The submitted data.
+ */
+function flickr_block_form_submit($block_id, $data) {
+  switch ($block_id) {
+    case 'potw':
+      if (empty($data['flickr_block_photoset'])) {
+        form_set_error('flickr_block_photoset', t('To use this block, you need to configure a Photoset ID'));
+      }
+      elseif (preg_match('#^http://www.flickr.com/photos/(.+)/sets/([0-9]+)#', $data['flickr_block_photoset'], $matches)) {
+        variable_set('flickr_block_photoset', $matches[2]);
+      }
+      elseif (is_numeric($data['flickr_block_photoset'])) {
+        variable_set('flickr_block_photoset', $data['flickr_block_photoset']);
+      }
+      else {
+        form_set_error('flickr_block_photoset', t('The provided photoset ID could not be processed. Please check your input.'));
+      }
+      break;
+  }
+}
+
+/**
+ * Settings form for the Flickr module.
+ *
+ * @return
+ *   The settings form to configure the Flickr module.
+ */
+function flickr_settings_form() {
+  return system_settings_form(array(
+      'flickr_apikey' => array(
+          '#type' => 'textfield',
+          '#title' => t('Flickr API key'),
+          '#description' => t('This is your Flickr API key. For more information, check the <a href="@api-help-url">Flickr help section</a>.', array('@api-help-url' => 'http://www.flickr.com/help/api/')),
+          '#default_value' => variable_get('flickr_apikey', ''),
+          '#required' => TRUE,
+      ),
+  ));
+}
