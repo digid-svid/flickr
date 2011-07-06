@@ -41,6 +41,13 @@ function flickr_menu() {
 }
 
 /**
+ * Implements hook_perm()
+ */
+function flickr_perm() {
+  return array('administer flickr');
+}
+
+/**
  * Implements hook_block()
  */
 function flickr_block($op = 'list', $delta = 0, $data = array()) {
