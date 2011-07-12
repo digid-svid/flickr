@@ -22,7 +22,7 @@ function flickr_init() {
   );
 
   drupal_add_js(array('flickr' => $settings), 'setting');
-  drupal_add_js(drupal_get_path('module', 'flickr') . '/scripts/flickr.js');
+  drupal_add_js(drupal_get_path('module', 'flickr') . '/js/flickr.js');
 }
 
 /**
